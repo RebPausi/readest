@@ -89,7 +89,7 @@ export const clearWaspLine = (doc: Document): void => {
 
 // ---------- reflowable (Highlight API) ----------
 
-type Word = {
+export type Word = {
   node: Text;
   start: number;
   end: number;
@@ -100,8 +100,7 @@ type Word = {
   block: Element | null;
 };
 
-const collectWords = (doc: Document): Word[] => {
-  const root = doc.body;
+export const collectWords = (doc: Document, root: Element | null = doc.body): Word[] => {
   if (!root) return [];
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const words: Word[] = [];
@@ -119,12 +118,50 @@ const collectWords = (doc: Document): Word[] => {
         const rects = range.getClientRects();
         const rect = rects[0];
         if (!rect || (rect.width === 0 && rect.height === 0)) continue;
-        // A word broken over two lines (hyphenation) gives two rects; the
-        // first one decides its line.
+        const start = m.index;
+        const end = m.index + m[0].length;
+        const lastRect = rects[rects.length - 1]!;
+        if (rects.length > 1 && Math.abs(lastRect.top - rect.top) > rect.height / 2) {
+          // A word hyphenated across two lines: split it where its characters
+          // move to the next line, so each part joins its own line.
+          let split = end;
+          for (let i = start + 1; i < end; i++) {
+            range.setStart(node, i);
+            range.setEnd(node, i + 1);
+            const r = range.getClientRects()[0];
+            if (r && Math.abs(r.top - rect.top) > rect.height / 2) {
+              split = i;
+              break;
+            }
+          }
+          words.push({
+            node,
+            start,
+            end: split,
+            left: rect.left,
+            right: rect.right,
+            top: rect.top,
+            bottom: rect.bottom,
+            block,
+          });
+          if (split < end) {
+            words.push({
+              node,
+              start: split,
+              end,
+              left: lastRect.left,
+              right: lastRect.right,
+              top: lastRect.top,
+              bottom: lastRect.bottom,
+              block,
+            });
+          }
+          continue;
+        }
         words.push({
           node,
-          start: m.index,
-          end: m.index + m[0].length,
+          start,
+          end,
           left: rect.left,
           right: rect.right,
           top: rect.top,
@@ -138,7 +175,7 @@ const collectWords = (doc: Document): Word[] => {
   return words;
 };
 
-const groupLines = (words: Word[]): { words: Word[]; lineInBlock: number }[] => {
+export const groupLines = (words: Word[]): { words: Word[]; lineInBlock: number }[] => {
   const lines: { words: Word[]; lineInBlock: number }[] = [];
   let current: Word[] = [];
   let lineInBlock = 0;
@@ -228,7 +265,7 @@ const applyReflowable = (doc: Document, opts: WaspLineOptions, state: State) => 
 
 // ---------- PDF (blended overlay) ----------
 
-const pageIsDark = (doc: Document, fallback: boolean): boolean => {
+export const pageIsDark = (doc: Document, fallback: boolean): boolean => {
   const canvas = doc.querySelector('#canvas canvas') as HTMLCanvasElement | null;
   try {
     const ctx = canvas?.getContext('2d', { willReadFrequently: false });

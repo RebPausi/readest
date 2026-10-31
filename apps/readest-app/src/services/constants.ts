@@ -597,6 +597,10 @@ export const DEFAULT_READING_AIDS_CONFIG: ReadingAidsConfig = {
   waspLineDarkColor2: '#ff7b7b',
   obsidianSyncEnabled: false,
   obsidianFolder: '',
+  lineGuideMode: 'off',
+  lineGuideWpm: 250,
+  lineGuideColor: '#f59e0b',
+  pdfTextBoldness: 0,
 };
 
 export const DEFAULT_WORD_LENS_CONFIG: WordLensConfig = {

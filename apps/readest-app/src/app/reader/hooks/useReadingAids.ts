@@ -7,6 +7,8 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useThemeStore } from '@/store/themeStore';
 import { getSentenceRangeAtPoint } from '@/utils/sentenceRange';
 import { applyWaspLine, clearWaspLine, isPdfPageDocument } from '@/utils/waspLine';
+import { applyPdfBoldness } from '@/utils/pdfBoldness';
+import { useLineGuide } from './useLineGuide';
 import { nextBooknoteStamp } from '@/utils/booknoteStamp';
 import { mergeRestyledAnnotation } from '../utils/annotatorUtil';
 import { uniqueId } from '@/utils/misc';
@@ -39,8 +41,7 @@ export const useReadingAids = (bookKey: string) => {
   const resizeObservers = useRef(new Map<Document, ResizeObserver>());
   const pendingTimers = useRef(new Map<Document, number>());
 
-  const isDarkMode = useThemeStore((state) => state.isDarkMode);
-  const viewSettings = useReaderStore((state) => state.viewStates[bookKey]?.viewSettings);
+  const lineGuide = useLineGuide(bookKey);
 
   // ---------- WaspLine ----------
 
@@ -61,6 +62,13 @@ export const useReadingAids = (bookKey: string) => {
         applyWaspLine(doc, !!vs.waspLineEnabled, waspOptions(vs));
       } catch (err) {
         console.warn('WaspLine failed', err);
+      }
+      if (isPdfPageDocument(doc)) {
+        try {
+          applyPdfBoldness(doc, vs.pdfTextBoldness ?? 0, useThemeStore.getState().isDarkMode);
+        } catch (err) {
+          console.warn('PDF boldness failed', err);
+        }
       }
     },
     [bookKey, waspOptions],
@@ -95,25 +103,41 @@ export const useReadingAids = (bookKey: string) => {
     getDocs().forEach((doc) => scheduleApply(doc, 50));
   }, [getDocs, scheduleApply]);
 
-  // Re-colour when the switches, colours or theme change.
+  // Re-colour when the switches, colours or theme change. Subscribing to the
+  // store (rather than relying on this component re-rendering) also catches
+  // settings saved by mutating the view settings object in place.
   useEffect(() => {
-    if (!viewSettings) return;
-    if (!viewSettings.waspLineEnabled) {
-      getDocs().forEach((doc) => clearWaspLine(doc));
-      return;
-    }
-    refreshAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    viewSettings?.waspLineEnabled,
-    viewSettings?.waspLineIntensity,
-    viewSettings?.waspLineColor1,
-    viewSettings?.waspLineColor2,
-    viewSettings?.waspLineDarkColor1,
-    viewSettings?.waspLineDarkColor2,
-    viewSettings?.applyThemeToPDF,
-    isDarkMode,
-  ]);
+    const signature = () => {
+      const vs = useReaderStore.getState().getViewSettings(bookKey);
+      if (!vs) return '';
+      return [
+        vs.waspLineEnabled,
+        vs.waspLineIntensity,
+        vs.waspLineColor1,
+        vs.waspLineColor2,
+        vs.waspLineDarkColor1,
+        vs.waspLineDarkColor2,
+        vs.applyThemeToPDF,
+        vs.pdfTextBoldness,
+        useThemeStore.getState().isDarkMode,
+      ].join('|');
+    };
+    let last = signature();
+    const onChange = () => {
+      const next = signature();
+      if (next === last) return;
+      last = next;
+      const vs = useReaderStore.getState().getViewSettings(bookKey);
+      if (!vs?.waspLineEnabled) getDocs().forEach((doc) => clearWaspLine(doc));
+      refreshAll();
+    };
+    const unsubReader = useReaderStore.subscribe(onChange);
+    const unsubTheme = useThemeStore.subscribe(onChange);
+    return () => {
+      unsubReader();
+      unsubTheme();
+    };
+  }, [bookKey, getDocs, refreshAll]);
 
   // ---------- click to highlight a sentence ----------
 
@@ -193,6 +217,7 @@ export const useReadingAids = (bookKey: string) => {
     (doc: Document, index: number) => {
       // Sections can be reloaded into a fresh document; colour every load.
       scheduleApply(doc, isPdfPageDocument(doc) ? 400 : 250);
+      lineGuide.attachDoc(doc);
 
       if (attachedDocs.current.has(doc)) return;
       attachedDocs.current.add(doc);
@@ -275,7 +300,7 @@ export const useReadingAids = (bookKey: string) => {
         });
       }
     },
-    [bookKey, highlightSentence, scheduleApply],
+    [bookKey, highlightSentence, scheduleApply, lineGuide],
   );
 
   useEffect(() => {

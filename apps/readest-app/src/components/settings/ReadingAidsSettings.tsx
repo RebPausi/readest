@@ -3,7 +3,7 @@ import { useEnv } from '@/context/EnvContext';
 import { useReaderStore } from '@/store/readerStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { saveViewSettings } from '@/helpers/settings';
-import { ReadingAidsConfig, SentenceClickMode, ViewSettings } from '@/types/book';
+import { LineGuideMode, ReadingAidsConfig, SentenceClickMode, ViewSettings } from '@/types/book';
 import { DEFAULT_READING_AIDS_CONFIG } from '@/services/constants';
 import { BoxedList, SettingsRow, SettingsSelect, SettingsSwitchRow } from './primitives';
 import ColorInput from './theme/ColorInput';
@@ -90,6 +90,59 @@ const ReadingAidsSettings: React.FC<ReadingAidsSettingsProps> = ({ bookKey }) =>
           {colorRow('waspLineDarkColor2', _('Dark Pages, Colour 2'))}
         </>
       )}
+      <SettingsRow label={_('Line Guide')} data-setting-id='settings.control.lineGuide'>
+        <SettingsSelect
+          value={values.lineGuideMode}
+          onChange={(e) => update('lineGuideMode', e.target.value as LineGuideMode)}
+          ariaLabel={_('Line Guide')}
+          options={[
+            { value: 'off', label: _('Off') },
+            { value: 'hover', label: _('Underline on Hover') },
+            { value: 'pacer', label: _('Pacer (press G)') },
+          ]}
+        />
+      </SettingsRow>
+      {values.lineGuideMode === 'pacer' && (
+        <SettingsRow label={_('Pacer Speed')}>
+          <SettingsSelect
+            value={String(values.lineGuideWpm)}
+            onChange={(e) => update('lineGuideWpm', Number(e.target.value))}
+            ariaLabel={_('Pacer Speed')}
+            options={Array.from(
+              new Set([
+                ...Array.from({ length: 15 }, (_v, i) => 100 + i * 50),
+                values.lineGuideWpm,
+              ]),
+            )
+              .sort((a, b) => a - b)
+              .map((wpm) => ({ value: String(wpm), label: `${wpm} wpm` }))}
+          />
+        </SettingsRow>
+      )}
+      {values.lineGuideMode !== 'off' && (
+        <SettingsRow label={_('Underline Colour')}>
+          <ColorInput
+            label={_('Underline Colour')}
+            value={values.lineGuideColor}
+            onChange={(color) => update('lineGuideColor', color)}
+            showPickerIcon
+            pickerPosition='right'
+          />
+        </SettingsRow>
+      )}
+      <SettingsRow label={_('PDF Text Boldness')} data-setting-id='settings.control.pdfBoldness'>
+        <SettingsSelect
+          value={String(values.pdfTextBoldness)}
+          onChange={(e) => update('pdfTextBoldness', Number(e.target.value))}
+          ariaLabel={_('PDF Text Boldness')}
+          options={[
+            { value: '0', label: _('Normal') },
+            { value: '1', label: _('Slightly Bolder') },
+            { value: '2', label: _('Bolder') },
+            { value: '3', label: _('Boldest') },
+          ]}
+        />
+      </SettingsRow>
       {appService?.isDesktopApp && (
         <SettingsSwitchRow
           label={_('Sync Highlights to Obsidian')}

@@ -34,6 +34,27 @@ restarting at every paragraph.
 - PDFs get a blended colour strip over each line of the page image.
 - Setting: **Settings → Behavior → Reading Aids → WaspLine Line Colours**.
 
+Shortcut: **W** switches WaspLine on and off.
+
+## Line guide (speed reading)
+
+**Settings → Behavior → Reading Aids → Line Guide**:
+
+- **Underline on Hover**: the line under the mouse is underlined.
+- **Pacer**: press **G** to start. The underline grows from the start of the line
+  to its end at the chosen words per minute, moves to the next line and turns the
+  page at the bottom. It starts on the line under the mouse (or the first line on
+  screen). **G** pauses and resumes, **[** and **]** change the speed by 25 wpm,
+  **Esc** stops.
+- Underline colour is configurable. Works in EPUBs and in PDFs with a text layer.
+
+## PDF text boldness
+
+**Settings → Behavior → Reading Aids → PDF Text Boldness** darkens the edges of the
+glyphs on PDF pages (or brightens them on a dark theme), so thin text reads heavier.
+PDF fonts themselves can't be changed: a PDF page is drawn as an image. For EPUBs,
+use **Settings → Font** (turn on *Override Book Font* to pick a font and weight).
+
 ## Sync highlights to Obsidian
 
 Turn on **Settings → Behavior → Reading Aids → Sync Highlights to Obsidian** and
@@ -59,6 +80,8 @@ note, `<Book title>.md`, rewritten a few seconds after any highlight or note cha
 | `apps/readest-app/src/utils/sentenceRange.ts` | Finds the sentence under a point |
 | `apps/readest-app/src/utils/waspLine.ts` | Line detection and colouring |
 | `apps/readest-app/src/app/reader/hooks/useReadingAids.ts` | Wires both into each loaded page |
+| `apps/readest-app/src/utils/lineGuide.ts`, `app/reader/hooks/useLineGuide.ts` | Line guide and pacer |
+| `apps/readest-app/src/utils/pdfBoldness.ts` | PDF text boldness |
 | `apps/readest-app/src/utils/obsidianExport.ts` | Builds the Obsidian note |
 | `apps/readest-app/src/app/reader/hooks/useObsidianSync.ts` | Writes it when highlights change |
 | `apps/readest-app/src/components/settings/ReadingAidsSettings.tsx` | Settings section |

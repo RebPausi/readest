@@ -514,6 +514,7 @@ export interface AnnotatorConfig {
 // Reading aids added in this fork: click-to-highlight-sentence and WaspLine
 // line gradients. Kept in one group so the fork touches upstream types once.
 export type SentenceClickMode = 'off' | 'click' | 'alt';
+export type LineGuideMode = 'off' | 'hover' | 'pacer';
 
 export interface ReadingAidsConfig {
   /** How a sentence is highlighted by clicking a word: plain click, Alt+click, or off. */
@@ -532,6 +533,13 @@ export interface ReadingAidsConfig {
   obsidianSyncEnabled: boolean;
   /** Absolute path of the vault folder the notes are written to. */
   obsidianFolder: string;
+  /** Underline the line under the mouse, or pace through lines at a set speed. */
+  lineGuideMode: LineGuideMode;
+  /** Pacer speed in words per minute. */
+  lineGuideWpm: number;
+  lineGuideColor: string;
+  /** Thicken PDF text: 0 off, 1 light, 2 medium, 3 strong. */
+  pdfTextBoldness: number;
 }
 
 export interface WordLensConfig {
