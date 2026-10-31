@@ -3,7 +3,7 @@
 #
 # Runs on every push to main and on demand (Actions tab → "Fork Windows build"
 # → Run workflow). The installer is attached to the run as an artifact named
-# "readest-windows-installer".
+# "readest-windows-installer", plus a portable exe as "readest-windows-portable".
 #
 # The updater is pointed at this fork's own releases, so the installed app
 # never replaces itself with upstream Readest (which lacks the fork's
@@ -82,5 +82,28 @@ jobs:
         with:
           name: readest-windows-installer
           path: target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      # Portable build: the same app, but it keeps its settings and library in
+      # the folder the exe sits in, so it can live on a USB drive or any folder
+      # without installing. Needs the Edge WebView2 runtime (built into
+      # Windows 10/11).
+      - name: build the portable exe
+        shell: bash
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        working-directory: apps/readest-app
+        run: |
+          echo "NEXT_PUBLIC_PORTABLE_APP=true" >> .env.local
+          pnpm tauri build --target x86_64-pc-windows-msvc --bundles nsis
+          mkdir -p ../../portable
+          cp ../../target/x86_64-pc-windows-msvc/release/readest.exe ../../portable/Readest-portable.exe
+
+      - name: upload the portable exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: readest-windows-portable
+          path: portable/Readest-portable.exe
           if-no-files-found: error
           retention-days: 30
