@@ -30,6 +30,7 @@ import { canShareText } from '@/utils/share';
 import { useEinkRefreshSupported } from '@/hooks/useEinkRefreshSupported';
 import { optInTelemetry, optOutTelemetry } from '@/utils/telemetry';
 import KeyboardShortcutsSettings from './KeyboardShortcutsSettings';
+import ReadingAidsSettings from './ReadingAidsSettings';
 
 const ControlPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterReset }) => {
   const _ = useTranslation();
@@ -619,6 +620,8 @@ const ControlPanel: React.FC<SettingsPanelPanelProp> = ({ bookKey, onRegisterRes
           data-setting-id='settings.control.customizeToolbar'
         />
       </BoxedList>
+
+      <ReadingAidsSettings bookKey={bookKey} />
 
       <BoxedList title={_('Animation')} data-setting-id='settings.control.pagingAnimation'>
         <SettingsSwitchRow

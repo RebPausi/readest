@@ -16,6 +16,7 @@ import {
   ViewSettings,
   ViewSettingsConfig,
   WordLensConfig,
+  ReadingAidsConfig,
 } from '@/types/book';
 import {
   HardcoverSettings,
@@ -584,6 +585,16 @@ export const DEFAULT_ANNOTATOR_CONFIG: AnnotatorConfig = {
   annotationToolbarItems: DEFAULT_ANNOTATION_TOOLBAR_ITEMS,
   copyToNotebook: false,
   noteExportConfig: DEFAULT_NOTE_EXPORT_CONFIG,
+};
+
+export const DEFAULT_READING_AIDS_CONFIG: ReadingAidsConfig = {
+  sentenceClickMode: 'click',
+  waspLineEnabled: false,
+  waspLineIntensity: 1,
+  waspLineColor1: '#0000ff',
+  waspLineColor2: '#ff0000',
+  waspLineDarkColor1: '#6cb8ff',
+  waspLineDarkColor2: '#ff7b7b',
 };
 
 export const DEFAULT_WORD_LENS_CONFIG: WordLensConfig = {

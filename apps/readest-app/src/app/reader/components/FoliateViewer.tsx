@@ -101,6 +101,7 @@ import { useBookCoverAutoSave } from '../hooks/useAutoSaveBookCover';
 import { useDiscordPresence } from '@/hooks/useDiscordPresence';
 import { manageSyntaxHighlighting } from '@/utils/highlightjs';
 import { isDialogueHighlightActive, manageDialogueHighlight } from '@/utils/dialogueHighlight';
+import { useReadingAids } from '../hooks/useReadingAids';
 import { getViewInsets } from '@/utils/insets';
 import { collectDocumentImages, DocumentImage } from '../utils/documentImages';
 import { footerReservesBand } from '../utils/footerBand';
@@ -189,6 +190,7 @@ const FoliateViewer: React.FC<{
   const librarySearchHighlightTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [scrollMargins, setScrollMargins] = useState({ top: 0, bottom: 0 });
   const docLoaded = useRef(false);
+  const { attachDoc: attachReadingAids, refreshAll: refreshReadingAids } = useReadingAids(bookKey);
 
   const autoScroll = useAutoScroll(bookKey, viewRef);
   const { registerSpeedListeners, overlayVisible: speedOverlayVisible } =
@@ -614,6 +616,8 @@ const FoliateViewer: React.FC<{
         manageDialogueHighlight(detail.doc, viewSettings);
       }
 
+      attachReadingAids(detail.doc, detail.index);
+
       setTimeout(() => {
         const sectionIndex = detail.index;
         const booknotes = config.booknotes || [];
@@ -756,6 +760,7 @@ const FoliateViewer: React.FC<{
         }
       }
     }
+    refreshReadingAids();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

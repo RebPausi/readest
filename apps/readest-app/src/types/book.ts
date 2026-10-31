@@ -511,6 +511,25 @@ export interface AnnotatorConfig {
   noteExportConfig: NoteExportConfig;
 }
 
+// Reading aids added in this fork: click-to-highlight-sentence and WaspLine
+// line gradients. Kept in one group so the fork touches upstream types once.
+export type SentenceClickMode = 'off' | 'click' | 'alt';
+
+export interface ReadingAidsConfig {
+  /** How a sentence is highlighted by clicking a word: plain click, Alt+click, or off. */
+  sentenceClickMode: SentenceClickMode;
+  /** Colour each line with a WaspLine/BeeLine-style end-of-line gradient. */
+  waspLineEnabled: boolean;
+  /** Gradient strength, 0.1 (subtle) to 1 (full colour at the line ends). */
+  waspLineIntensity: number;
+  /** Gradient colours on light pages. */
+  waspLineColor1: string;
+  waspLineColor2: string;
+  /** Gradient colours on dark pages. */
+  waspLineDarkColor1: string;
+  waspLineDarkColor2: string;
+}
+
 export interface WordLensConfig {
   wordLensEnabled: boolean;
   /** Difficulty slider, 1 (fewest hints) .. 5 (most hints). */
@@ -571,6 +590,7 @@ export interface ViewSettings
     ProofreadRulesConfig,
     AnnotatorConfig,
     WordLensConfig,
+    ReadingAidsConfig,
     ViewSettingsConfig {}
 
 export interface BookProgress {

@@ -1,0 +1,86 @@
+# Builds an unsigned Windows installer for this fork (reading aids:
+# click-to-highlight-sentence and WaspLine line colours).
+#
+# Runs on every push to main and on demand (Actions tab → "Fork Windows build"
+# → Run workflow). The installer is attached to the run as an artifact named
+# "readest-windows-installer".
+#
+# The updater is pointed at this fork's own releases, so the installed app
+# never replaces itself with upstream Readest (which lacks the fork's
+# features). The build has no signing keys, so no updater artifacts are made.
+name: Fork Windows build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: initialize git submodules
+        run: git submodule update --init --recursive
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: copy pdfjs and simplecc vendor files
+        run: pnpm --filter @readest/readest-app setup-vendors
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: fork-windows-x86_64
+
+      - name: point the updater at this fork
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = "apps/readest-app/src-tauri/tauri.conf.json";
+            const conf = JSON.parse(fs.readFileSync(p, "utf8"));
+            conf.plugins.updater.endpoints = [
+              "https://github.com/${{ github.repository }}/releases/latest/download/latest.json",
+            ];
+            conf.bundle.createUpdaterArtifacts = false;
+            fs.writeFileSync(p, JSON.stringify(conf, null, 2));
+          '
+
+      - name: build the installer
+        shell: bash
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        working-directory: apps/readest-app
+        run: pnpm tauri build --target x86_64-pc-windows-msvc --bundles nsis
+
+      - name: upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: readest-windows-installer
+          path: target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 30
