@@ -528,6 +528,10 @@ export interface ReadingAidsConfig {
   /** Gradient colours on dark pages. */
   waspLineDarkColor1: string;
   waspLineDarkColor2: string;
+  /** Keep a Markdown note per book in an Obsidian vault folder up to date. */
+  obsidianSyncEnabled: boolean;
+  /** Absolute path of the vault folder the notes are written to. */
+  obsidianFolder: string;
 }
 
 export interface WordLensConfig {

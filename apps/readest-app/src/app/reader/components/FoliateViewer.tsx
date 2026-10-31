@@ -102,6 +102,7 @@ import { useDiscordPresence } from '@/hooks/useDiscordPresence';
 import { manageSyntaxHighlighting } from '@/utils/highlightjs';
 import { isDialogueHighlightActive, manageDialogueHighlight } from '@/utils/dialogueHighlight';
 import { useReadingAids } from '../hooks/useReadingAids';
+import { useObsidianSync } from '../hooks/useObsidianSync';
 import { getViewInsets } from '@/utils/insets';
 import { collectDocumentImages, DocumentImage } from '../utils/documentImages';
 import { footerReservesBand } from '../utils/footerBand';
@@ -191,6 +192,7 @@ const FoliateViewer: React.FC<{
   const [scrollMargins, setScrollMargins] = useState({ top: 0, bottom: 0 });
   const docLoaded = useRef(false);
   const { attachDoc: attachReadingAids, refreshAll: refreshReadingAids } = useReadingAids(bookKey);
+  useObsidianSync(bookKey);
 
   const autoScroll = useAutoScroll(bookKey, viewRef);
   const { registerSpeedListeners, overlayVisible: speedOverlayVisible } =

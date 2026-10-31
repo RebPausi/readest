@@ -14,10 +14,10 @@ interface ReadingAidsSettingsProps {
 
 type ColorKey = 'waspLineColor1' | 'waspLineColor2' | 'waspLineDarkColor1' | 'waspLineDarkColor2';
 
-/** Settings for the fork's reading aids: sentence highlighting and WaspLine. */
+/** Settings for the fork's reading aids: sentence highlighting, WaspLine and Obsidian sync. */
 const ReadingAidsSettings: React.FC<ReadingAidsSettingsProps> = ({ bookKey }) => {
   const _ = useTranslation();
-  const { envConfig } = useEnv();
+  const { envConfig, appService } = useEnv();
   const { getViewSettings } = useReaderStore();
   const viewSettings = getViewSettings(bookKey);
   const initial: ReadingAidsConfig = { ...DEFAULT_READING_AIDS_CONFIG, ...(viewSettings ?? {}) };
@@ -27,6 +27,11 @@ const ReadingAidsSettings: React.FC<ReadingAidsSettingsProps> = ({ bookKey }) =>
     setValues((prev) => ({ ...prev, [key]: value }));
     // Not a stylesheet change, so the book's styles are not re-applied.
     void saveViewSettings(envConfig, bookKey, key, value as ViewSettings[K], false, false);
+  };
+
+  const chooseObsidianFolder = async () => {
+    const folder = await appService?.selectDirectory('write');
+    if (folder) update('obsidianFolder', folder);
   };
 
   const colorRow = (key: ColorKey, label: string) => (
@@ -84,6 +89,35 @@ const ReadingAidsSettings: React.FC<ReadingAidsSettingsProps> = ({ bookKey }) =>
           {colorRow('waspLineDarkColor1', _('Dark Pages, Colour 1'))}
           {colorRow('waspLineDarkColor2', _('Dark Pages, Colour 2'))}
         </>
+      )}
+      {appService?.isDesktopApp && (
+        <SettingsSwitchRow
+          label={_('Sync Highlights to Obsidian')}
+          description={
+            values.obsidianFolder
+              ? _('One Markdown note per book in the chosen folder')
+              : _('Choose your vault folder below')
+          }
+          checked={values.obsidianSyncEnabled}
+          onChange={() => {
+            const next = !values.obsidianSyncEnabled;
+            update('obsidianSyncEnabled', next);
+            if (next && !values.obsidianFolder) void chooseObsidianFolder();
+          }}
+          data-setting-id='settings.control.obsidianSync'
+        />
+      )}
+      {appService?.isDesktopApp && values.obsidianSyncEnabled && (
+        <SettingsRow label={_('Vault Folder')}>
+          <button
+            type='button'
+            onClick={() => void chooseObsidianFolder()}
+            title={values.obsidianFolder || undefined}
+            className='btn btn-ghost btn-sm max-w-[14rem] truncate font-normal normal-case'
+          >
+            {values.obsidianFolder || _('Choose Folder')}
+          </button>
+        </SettingsRow>
       )}
     </BoxedList>
   );

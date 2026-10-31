@@ -34,6 +34,24 @@ restarting at every paragraph.
 - PDFs get a blended colour strip over each line of the page image.
 - Setting: **Settings → Behavior → Reading Aids → WaspLine Line Colours**.
 
+## Sync highlights to Obsidian
+
+Turn on **Settings → Behavior → Reading Aids → Sync Highlights to Obsidian** and
+pick a folder inside your vault (for example `Vault/Readest`). Each book gets one
+note, `<Book title>.md`, rewritten a few seconds after any highlight or note changes.
+
+- Front matter (`title`, `author`, `format`, `highlights`, `updated`, tag `readest`)
+  works with Dataview and Bases.
+- Highlights are grouped by chapter in reading order, each as a quote with page,
+  colour, an **open** link back to the exact spot in Readest, and a block id
+  `^rd-<id>`, so you can link or embed one highlight elsewhere:
+  `![[Book title#^rd-abc123]]`.
+- Your Readest notes appear under their highlight.
+- Deleting a highlight in Readest removes it from the note.
+- One-way: the note mirrors Readest, so write your own thoughts in a separate note
+  that links to it (edits inside the synced note are overwritten).
+- Desktop app only.
+
 ## Where the code is
 
 | File | What it does |
@@ -41,6 +59,8 @@ restarting at every paragraph.
 | `apps/readest-app/src/utils/sentenceRange.ts` | Finds the sentence under a point |
 | `apps/readest-app/src/utils/waspLine.ts` | Line detection and colouring |
 | `apps/readest-app/src/app/reader/hooks/useReadingAids.ts` | Wires both into each loaded page |
+| `apps/readest-app/src/utils/obsidianExport.ts` | Builds the Obsidian note |
+| `apps/readest-app/src/app/reader/hooks/useObsidianSync.ts` | Writes it when highlights change |
 | `apps/readest-app/src/components/settings/ReadingAidsSettings.tsx` | Settings section |
 
 Small hooks into upstream files: `types/book.ts` (`ReadingAidsConfig`),

@@ -595,6 +595,8 @@ export const DEFAULT_READING_AIDS_CONFIG: ReadingAidsConfig = {
   waspLineColor2: '#ff0000',
   waspLineDarkColor1: '#6cb8ff',
   waspLineDarkColor2: '#ff7b7b',
+  obsidianSyncEnabled: false,
+  obsidianFolder: '',
 };
 
 export const DEFAULT_WORD_LENS_CONFIG: WordLensConfig = {
