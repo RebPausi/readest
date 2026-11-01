@@ -103,6 +103,7 @@ import { manageSyntaxHighlighting } from '@/utils/highlightjs';
 import { isDialogueHighlightActive, manageDialogueHighlight } from '@/utils/dialogueHighlight';
 import { useReadingAids } from '../hooks/useReadingAids';
 import { useObsidianSync } from '../hooks/useObsidianSync';
+import PacerControl from './PacerControl';
 import { getViewInsets } from '@/utils/insets';
 import { collectDocumentImages, DocumentImage } from '../utils/documentImages';
 import { footerReservesBand } from '../utils/footerBand';
@@ -1460,6 +1461,7 @@ const FoliateViewer: React.FC<{
         />
       )}
       <ExternalLinkConfirm view={viewRef.current} />
+      <PacerControl bookKey={bookKey} />
       <div
         ref={containerRef}
         role='main'

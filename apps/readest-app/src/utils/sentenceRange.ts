@@ -68,17 +68,43 @@ const findRoot = (node: Node): Element | null => {
   );
 };
 
+// Marks a hard break no sentence may cross: on a PDF page, between the body
+// text and a footnote, header, page number or another column.
+const HARD_BREAK = '\u2029';
+
+const median = (values: number[]) => {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)]!;
+};
+
 /**
  * The root's text as one string, with a newline for each <br> and block
  * boundary. Newlines belong to no text node; every other character maps to
- * exactly one entry.
+ * exactly one entry. On a PDF page, a HARD_BREAK is put where the layout says
+ * a new block starts: a vertical gap wider than a line, a change of text
+ * size (footnotes are smaller), or a jump back up the page (a new column).
  */
 const collectText = (root: Element): { entries: TextEntry[]; text: string } => {
   const doc = root.ownerDocument;
+  const isPdf = root.classList.contains('textLayer');
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
   const entries: TextEntry[] = [];
   let text = '';
   let block: Element | null = null;
+
+  const bodyHeight = isPdf
+    ? median(
+        Array.from(root.querySelectorAll('span'))
+          .filter((s) => /\S/.test(s.textContent ?? '') && !s.querySelector('span'))
+          .map((s) => s.getBoundingClientRect().height)
+          .filter((h) => h > 0),
+      )
+    : 0;
+  type Line = { top: number; bottom: number; height: number; left: number };
+  let line: Line | null = null;
+  const sizeClass = (h: number) => (bodyHeight && h < bodyHeight * 0.85 ? 'small' : 'body');
+
   let node = walker.nextNode();
   while (node) {
     if (node.nodeType === Node.ELEMENT_NODE) {
@@ -96,12 +122,35 @@ const collectText = (root: Element): { entries: TextEntry[]; text: string } => {
         node = next;
         continue;
       }
-      if (el.tagName === 'BR' && !text.endsWith('\n')) text += '\n';
+      if (el.tagName === 'BR' && !/[\n\u2029]$/.test(text)) text += '\n';
     } else {
       const content = (node as Text).data;
       if (content) {
+        if (isPdf && /\S/.test(content) && node.parentElement) {
+          const r = node.parentElement.getBoundingClientRect();
+          if (r.height > 0) {
+            const mid = (r.top + r.bottom) / 2;
+            const onLine = line && mid >= line.top && mid <= line.bottom;
+            if (line && onLine) {
+              line.top = Math.min(line.top, r.top);
+              line.bottom = Math.max(line.bottom, r.bottom);
+              line.height = Math.max(line.height, r.height);
+            } else {
+              if (line) {
+                const h = Math.max(line.height, r.height, 1);
+                const gap = r.top - line.bottom;
+                const hard =
+                  gap > h * 0.9 ||
+                  r.bottom < line.top ||
+                  sizeClass(r.height) !== sizeClass(line.height);
+                if (hard) text = text.replace(/\n$/, '') + HARD_BREAK;
+              }
+              line = { top: r.top, bottom: r.bottom, height: r.height, left: r.left };
+            }
+          }
+        }
         const nodeBlock = (node.parentElement?.closest(BLOCK_SELECTOR) ?? null) as Element | null;
-        if (block && nodeBlock !== block && !text.endsWith('\n')) text += '\n';
+        if (block && nodeBlock !== block && !/[\n\u2029]$/.test(text)) text += '\n';
         block = nodeBlock;
         entries.push({ node: node as Text, start: text.length, end: text.length + content.length });
         text += content;
@@ -183,10 +232,19 @@ export const getSentenceRangeAtPoint = (
   const caretOffset = offsetOf(entries, caretNode, caret.offset);
   if (caretOffset === null) return null;
 
+  // Only look inside the block holding the caret, so a sentence that runs
+  // off the bottom of a PDF page ends at the end of its last line instead of
+  // swallowing the footnotes below it.
+  const blockStart = text.lastIndexOf(HARD_BREAK, Math.max(0, caretOffset - 1)) + 1;
+  const nextBreak = text.indexOf(HARD_BREAK, caretOffset);
+  const blockEnd = nextBreak === -1 ? text.length : nextBreak;
   const locale = doc.documentElement.lang || undefined;
-  const segments = segmentSentences(text, locale);
+  const segments = segmentSentences(text.slice(blockStart, blockEnd), locale).map((sg) => ({
+    start: sg.start + blockStart,
+    end: sg.end + blockStart,
+  }));
   // A caret right after the last character of a sentence belongs to it.
-  const probe = Math.min(caretOffset, text.length - 1);
+  const probe = Math.max(blockStart, Math.min(caretOffset, blockEnd - 1));
   const seg =
     segments.find((s) => s.start <= probe && probe < s.end) ?? segments[segments.length - 1];
   if (!seg) return null;

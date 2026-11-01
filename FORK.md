@@ -18,8 +18,10 @@ becomes a normal Readest highlight in your current highlight colour and style.
   (`Click`, `Alt + Click`, or `Off`). With `Alt + Click`, a plain click goes back to
   turning pages and showing the toolbars.
 
-Limits: a sentence is searched within its paragraph (EPUB) or its page (PDF), so a
-sentence that continues onto the next PDF page is highlighted only up to the page end.
+Limits: a sentence is searched within its paragraph (EPUB) or its text block (PDF).
+On a PDF page, footnotes, headers, page numbers and other columns count as separate
+blocks, so a sentence that continues onto the next page is highlighted to the end of
+its last line, never into the footnotes.
 
 ## WaspLine line colours
 
@@ -46,6 +48,11 @@ Shortcut: **W** switches WaspLine on and off.
   page at the bottom. It starts on the line under the mouse (or the first line on
   screen). **G** pauses and resumes, **[** and **]** change the speed by 25 wpm,
   **Esc** stops.
+- In pacer mode a small control sits at the bottom-left of the page: play/pause,
+  stop, − / + and the speed. Scroll the mouse wheel over it to change the speed, or
+  hold **Alt** and scroll anywhere on the page.
+- Page turns follow the reader's own record of what's on screen, so no lines are
+  skipped in page view.
 - Underline colour is configurable. Works in EPUBs and in PDFs with a text layer.
 
 ## PDF text boldness
