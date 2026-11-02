@@ -136,7 +136,16 @@ export const tauriHandleOnCloseWindow = async (callback: () => void) => {
     if (currentWindow.label === 'main' && (await osType()) === 'macos') {
       return;
     }
-    await callback();
+    // Fork: never let a failed or stuck save keep the window open. Give the
+    // save a few seconds, then close regardless.
+    try {
+      await Promise.race([
+        Promise.resolve(callback()),
+        new Promise<void>((resolve) => setTimeout(resolve, 5000)),
+      ]);
+    } catch (error) {
+      console.error('Error while saving before close:', error);
+    }
     if (currentWindow.label.startsWith('reader')) {
       await emitTo('main', 'close-reader-window', { label: currentWindow.label });
       setTimeout(() => currentWindow.destroy(), 300);
